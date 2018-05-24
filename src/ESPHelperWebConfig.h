@@ -17,8 +17,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
+
+Refactoring by Suren Khorenyan
 */
-    
 
 
 #ifndef ESPHELPER_WEBCONFIG_H
@@ -30,10 +31,10 @@ along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
 #include <ESP8266mDNS.h>
 
 
-class ESPHelperWebConfig{
+class ESPHelperWebConfig {
 
-public:	
-	ESPHelperWebConfig(int port, const char* URI);  //constructor
+  public:
+    ESPHelperWebConfig(int port, const char* URI);
     ESPHelperWebConfig(ESP8266WebServer *server, const char* URI);
 
     bool begin(const char* hostname);
@@ -46,9 +47,9 @@ public:
     netInfo getConfig();
 
     void setSpiffsReset(const char* uri);
-    
-    
-private:
+
+
+  private:
     void handleGet();
     void handlePost();
     void handleNotFound();
@@ -77,10 +78,6 @@ private:
     netInfo _config;
     bool _configLoaded = false;
     bool _runningLocal = false;
-
-	
 };
 
 #endif
-
-

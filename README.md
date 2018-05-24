@@ -14,15 +14,14 @@ Please take a look at the examples included with this library to get an idea of 
 
 Note:
 -----
-This library does requre the use of these libraries (so make sure they're installed as well!):
- * 
- [Metro](https://www.pjrc.com/teensy/td_libs_Metro.html)
- * 
- [pubsubclient](https://github.com/knolleary/pubsubclient)
-  * 
- [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+This library requres the these libraries (so make sure they're installed as well!):
 
- In addition to those libraries, make sure that you have the ESP8266 core installed. That can be found [here](https://github.com/esp8266/Arduino)
+- [Metro](https://github.com/surik00/Arduino-Metro)
+- [pubsubclient](https://github.com/knolleary/pubsubclient)
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+
+
+In addition to those libraries, make sure that you have the ESP8266 core installed. That can be found [here](https://github.com/esp8266/Arduino)
 
 Useful Methods:
 ---------------

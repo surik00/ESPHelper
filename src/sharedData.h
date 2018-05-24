@@ -1,22 +1,22 @@
 /*
-    sharedTypes.h
-    Copyright (c) 2018 ItKindaWorks Inc All right reserved.
-    github.com/ItKindaWorks
+sharedTypes.h
+Copyright (c) 2018 ItKindaWorks Inc All right reserved.
+github.com/ItKindaWorks
 
-    This file is part of ESPHelper
+This file is part of ESPHelper
 
-    ESPHelper is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ESPHelper is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    ESPHelper is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ESPHelper is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -24,7 +24,7 @@
 #ifndef SHARED_TYPES_H
 #define SHARED_TYPES_H
 
-#define VERSION "1-5-7"
+#define VERSION "1-5-8"
 
 
 //Maximum number of subscriptions that can be auto-subscribed
@@ -53,7 +53,7 @@ struct netInfo {
 
 	netInfo() : mqttPort(1883) {}
 
-	//name | mqtt host | ssid | network pass
+	// name | mqtt host | ssid | network pass
 	netInfo(const char* _name,
 			const char* _mqttHost,
 			const char* _ssid,
@@ -72,7 +72,7 @@ struct netInfo {
 			willQoS(1),
 			willRetain(1) {}
 
-  //mqtt host | ssid | network pass | willTopic | willMessage
+  // mqtt host | ssid | network pass | willTopic | willMessage
   netInfo(const char* _mqttHost,
     const char* _ssid,
     const char* _pass,
@@ -91,7 +91,7 @@ struct netInfo {
     willQoS(1),
     willRetain(1) {}
 
-	//mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass
+	// mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass
 	netInfo(const char* _mqttHost,
 			const char* _mqttUser,
 			const char* _mqttPass,
@@ -112,7 +112,7 @@ struct netInfo {
 			willRetain(1)  {}
 
 
-	//mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | ota pass | hostname
+	// mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | ota pass | hostname
 	netInfo(const char* _mqttHost,
 			const char* _mqttUser,
 			const char* _mqttPass,
@@ -135,7 +135,7 @@ struct netInfo {
 			willRetain(1) {}
 
 
-	//mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | ota pass | hostname | willTopic | willMessage
+	// mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | ota pass | hostname | willTopic | willMessage
 	netInfo(const char* _mqttHost,
 			const char* _mqttUser,
 			const char* _mqttPass,
@@ -160,7 +160,7 @@ struct netInfo {
 			willRetain(1) {}
 
 
-	//mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | willTopic | willMessage | willRetain | willQoS
+	// mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | willTopic | willMessage | willRetain | willQoS
 	netInfo(const char* _mqttHost,
 			const char* _mqttUser,
 			const char* _mqttPass,
@@ -185,7 +185,7 @@ struct netInfo {
 			willRetain(1) {}
 
 
-	//mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | ota pass | hostname | willTopic | willMessage | willRetain | willQoS
+	// mqtt host | mqtt user| mqtt pass| mqtt port| ssid | network pass | ota pass | hostname | willTopic | willMessage | willRetain | willQoS
 	netInfo(const char* _mqttHost,
 			const char* _mqttUser,
 			const char* _mqttPass,
@@ -209,7 +209,7 @@ struct netInfo {
 			willTopic(_willTopic),
 			willMessage(_willMessage),
 			willQoS(_willQoS),
-			willRetain(_willRetain)  {}
+			willRetain(_willRetain) {}
 
 };
 // typedef struct netInfo netInfo;
@@ -220,8 +220,6 @@ struct subscription{
 	const char* topic;
 };
 typedef struct subscription subscription;
-
-
 
 
 #endif

@@ -17,23 +17,28 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
+
+Refactoring by Suren Khorenyan
 */
+
 
 #include "ESPHelperFS.h"
 
 // StaticJsonBuffer<JSON_SIZE>* ESPHelperFS::_tmpBufPtr = NULL;
 
 
-ESPHelperFS::ESPHelperFS() : _filename("/netConfig.json"){
+ESPHelperFS::ESPHelperFS() : _filename("/netConfig.json") {
   _networkData = defaultConfig;
 }
 
-ESPHelperFS::ESPHelperFS(const char* filename){
+
+ESPHelperFS::ESPHelperFS(const char* filename) {
   _filename = filename;
   _networkData = defaultConfig;
 }
 
-bool ESPHelperFS::begin(){
+
+bool ESPHelperFS::begin() {
   //load the config file
   if (SPIFFS.begin()) {
     // printFSinfo();
@@ -43,33 +48,29 @@ bool ESPHelperFS::begin(){
   return false;
 }
 
-void ESPHelperFS::end(){
-  FSdebugPrintln("Filesystem Unloaded");
+
+void ESPHelperFS::end() {
+  FSdebugPrintln("Unloaded Filesystem");
   SPIFFS.end();
 }
 
 
-
-
-void ESPHelperFS::printFile(){
+void ESPHelperFS::printFile() {
   // this opens the file "f.txt" in read-mode
   File f = SPIFFS.open(_filename, "r");
-  
-  if(f) {
-    // we could open the file
-    while(f.available()) {
-      //Lets read line by line from the file
+  if (f) {
+    // we successfully opened the file
+    while (f.available()) {
+      // Let's read line by line from the file
       String line = f.readStringUntil('\n');
       FSdebugPrintln(line);
     }
-
   }
   f.close();
 }
 
 
-
-void ESPHelperFS::printFSinfo(){
+void ESPHelperFS::printFSinfo() {
   FSInfo fs_info;
   SPIFFS.info(fs_info);
   FSdebugPrint("total bytes: ");
@@ -88,27 +89,26 @@ void ESPHelperFS::printFSinfo(){
 
 
 //load the file from FS into var buf
-bool ESPHelperFS::loadFile(const char* filename, std::unique_ptr<char[]> &buf){
+bool ESPHelperFS::loadFile(const char* filename, std::unique_ptr<char[]> &buf) {
 
-  FSdebugPrint("Opening File: ");
-  FSdebugPrintln(filename);
-  //open file as read only
+  // FSdebugPrint("Opening File: ");  // FS Debug print
+  // FSdebugPrintln(filename);  // FS Debug print
+  // open file as read only
   File configFile = SPIFFS.open(filename, "r");
 
-  //check to make sure opening was possible
+  // check to make sure opening was possible
   if (!configFile) {
-    FSdebugPrintln("Failed to open config file");
+    // FSdebugPrintln("Failed to open config file");  // FS Debug print
     configFile.close();
     return false;
   }
 
-
-  //make sure the config isnt too large to store in the JSON container
+  // make sure the config isn't too large to store in the JSON container
   size_t size = configFile.size();
-  FSdebugPrint("JSON File Size: ");
-  FSdebugPrintln(size);
+  // FSdebugPrint("JSON File Size: ");  // FS Debug print
+  // FSdebugPrintln(size);  // FS Debug print
   if (size > JSON_SIZE) { 
-    FSdebugPrintln("JSON File too large - returning"); 
+    // FSdebugPrintln("JSON File too large - returning");   // FS Debug print
     return false;
   }
 
@@ -120,7 +120,7 @@ bool ESPHelperFS::loadFile(const char* filename, std::unique_ptr<char[]> &buf){
   // use configFile.readString instead.
   configFile.readBytes(newBuf.get(), size);
 
-  //move the contents of newBuf into buf
+  // move the contents of newBuf into buf
   buf = std::move(newBuf);
 
   //close out the file
@@ -131,61 +131,64 @@ bool ESPHelperFS::loadFile(const char* filename, std::unique_ptr<char[]> &buf){
   
 }
 
-int8_t ESPHelperFS::validateConfig(const char* filename){
+
+int8_t ESPHelperFS::validateConfig(const char* filename) {
   
   //create a buffer for the file data
   std::unique_ptr<char[]> buf(new char[JSON_SIZE]);
   loadFile(filename, buf);
   StaticJsonBuffer<JSON_SIZE> jsonBuffer;
   JsonObject& json = jsonBuffer.parseObject(buf.get());
-  if(json.size() == 0){ return NO_CONFIG;}
+  if (json.size() == 0) {
+    // FSdebugPrintln("JSON File is empty");  // FS Debug print
+    return NO_CONFIG;
+  }
 
-  //return false if the file could not be parsed
+  // return false if the file could not be parsed
   if (!json.success()) {
-    FSdebugPrintln("JSON File corrupt");
-    
+    // FSdebugPrintln("JSON File corrupt");  // FS Debug print
     return CANNOT_PARSE;
   }
 
-  //check to make sure all netInfo keys exist
-  if(!json.containsKey("ssid") 
-    || !json.containsKey("networkPass") 
-    || !json.containsKey("mqttIP") 
-    || !json.containsKey("mqttUSER")
-    || !json.containsKey("mqttPASS")
-    || !json.containsKey("mqttPORT")
-    || !json.containsKey("hostname")
-    || !json.containsKey("OTA_Password")
-    || !json.containsKey("willTopic")
-    || !json.containsKey("willMessage")
-    || !json.containsKey("willQoS")
-    || !json.containsKey("willRetain")){
+  // check to make sure all netInfo keys exist
+  if ( !(json.containsKey("ssid") 
+      && json.containsKey("networkPass") 
+      && json.containsKey("mqttIP") 
+      && json.containsKey("mqttUSER")
+      && json.containsKey("mqttPASS")
+      && json.containsKey("mqttPORT")
+      && json.containsKey("hostname")
+      && json.containsKey("OTA_Password")
+      && json.containsKey("willTopic")
+      && json.containsKey("willMessage")
+      && json.containsKey("willQoS")
+      && json.containsKey("willRetain")) ) {
 
-    FSdebugPrintln("Config incomplete");
-    
+    // FSdebugPrintln("Config incomplete");  // FS Debug print
     return INCOMPLETE;
   }
   return GOOD_CONFIG;
 }
 
-bool ESPHelperFS::loadNetworkConfig(){
 
-  //validate that the config file is good and if not create a new one
-  if(validateConfig(_filename) != GOOD_CONFIG){
+bool ESPHelperFS::loadNetworkConfig() {
+
+  // check if the config file is good. And if not - create a new one.
+  if (validateConfig(_filename) != GOOD_CONFIG) {
     createConfig(&defaultConfig);
     return false;
   }
 
 
-  else{
-    //create a buffer for the file data
+  else {
+    // create a buffer for the file data
     std::unique_ptr<char[]> buf(new char[JSON_SIZE]);
     loadFile(_filename, buf);
     StaticJsonBuffer<JSON_SIZE> jsonBuffer;
     JsonObject& json = jsonBuffer.parseObject(buf.get());
 
 
-    //copy the keys into char arrays
+    // copy the keys into char arrays
     strcpy(ssid, json["ssid"]);
     strcpy(netPass, json["networkPass"]);
     strcpy(hostName, json["hostname"]);
@@ -203,87 +206,85 @@ bool ESPHelperFS::loadNetworkConfig(){
     int numQoS = atoi(willQoS);
     int numRetain = atoi(willRetain);
 
-    //then set that data into a netInfo object
-    _networkData = {mqttHost : mqtt_ip,
-                    mqttUser : mqttUser,
-                    mqttPass : mqttPass,
-                    mqttPort : port,
-                    ssid : ssid,
-                    pass : netPass,
-                    otaPassword : otaPass,
-                    hostname : hostName,
-                    willTopic : willTopic,
-                    willMessage : willMessage,
-                    willQoS : numQoS,
-                    willRetain : numRetain};
+    // then set that data into a netInfo object
+    _networkData = {
+      mqttHost : mqtt_ip,
+      mqttUser : mqttUser,
+      mqttPass : mqttPass,
+      mqttPort : port,
+      ssid : ssid,
+      pass : netPass,
+      otaPassword : otaPass,
+      hostname : hostName,
+      willTopic : willTopic,
+      willMessage : willMessage,
+      willQoS : numQoS,
+      willRetain : numRetain
+    };
 
-    
-                    
-    FSdebugPrintln("Reading config file with values: ");
-    FSdebugPrint("MQTT Server: ");
-    FSdebugPrintln(_networkData.mqttHost);
-    FSdebugPrint("MQTT User: ");
-    FSdebugPrintln(_networkData.mqttUser);
-    FSdebugPrint("MQTT Password: ");
-    FSdebugPrintln(_networkData.mqttPass);
-    FSdebugPrint("MQTT Port: ");
-    FSdebugPrintln(_networkData.mqttPort);
-    FSdebugPrint("SSID: ");
-    FSdebugPrintln(_networkData.ssid);
-    FSdebugPrint("Network Pass: ");
-    FSdebugPrintln(_networkData.pass);
-    FSdebugPrint("Device Name: ");
-    FSdebugPrintln(_networkData.hostname);
-    FSdebugPrint("OTA Password: ");
-    FSdebugPrintln(_networkData.otaPassword);
-    FSdebugPrint("Last Will Topic: ");
-    FSdebugPrintln(_networkData.willTopic);
-    FSdebugPrint("Last Will Message: ");
-    FSdebugPrintln(_networkData.willMessage);
-    FSdebugPrint("Last Will QoS: ");
-    FSdebugPrintln(_networkData.willQoS);
-    FSdebugPrint("Last Will Retain: ");
-    FSdebugPrintln(_networkData.willRetain);
+    // FSdebugPrintln("Reading config file with values: ");  // FS Debug print
+    // FSdebugPrint("MQTT Server: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.mqttHost);  // FS Debug print
+    // FSdebugPrint("MQTT User: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.mqttUser);  // FS Debug print
+    // FSdebugPrint("MQTT Password: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.mqttPass);  // FS Debug print
+    // FSdebugPrint("MQTT Port: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.mqttPort);  // FS Debug print
+    // FSdebugPrint("SSID: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.ssid);  // FS Debug print
+    // FSdebugPrint("Network Pass: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.pass);  // FS Debug print
+    // FSdebugPrint("Device Name: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.hostname);  // FS Debug print
+    // FSdebugPrint("OTA Password: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.otaPassword);  // FS Debug print
+    // FSdebugPrint("Last Will Topic: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.willTopic);  // FS Debug print
+    // FSdebugPrint("Last Will Message: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.willMessage);  // FS Debug print
+    // FSdebugPrint("Last Will QoS: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.willQoS);  // FS Debug print
+    // FSdebugPrint("Last Will Retain: ");  // FS Debug print
+    // FSdebugPrintln(_networkData.willRetain);  // FS Debug print
 
-    // configFile.close();
+    // configFile.close();  // donno why it is here
   }
 
-  
   return true;
 }
 
 
-//add a key to a json file
-bool ESPHelperFS::addKey(const char* keyName, const char* value){
-  if(_filename != ""){
-    return addKey(keyName, value, _filename);
-  }
-  else{return false;}
+// add a key to a json file
+bool ESPHelperFS::addKey(const char* keyName, const char* value) {
+  if(_filename == "")
+    return false;
+  return addKey(keyName, value, _filename);
 }
 
-//add a key to a json file
-bool ESPHelperFS::addKey(const char* keyName, const char* value, const char* filename){
-  if(!SPIFFS.exists(filename)){
-    File configFile = SPIFFS.open(filename, "w");
-    configFile.close();
-  }
+// add a key to a json file
+bool ESPHelperFS::addKey(const char* keyName, const char* value, const char* filename) {
+  // WTF is that? Why?
+  // if(!SPIFFS.exists(filename)) {
+  //   File configFile = SPIFFS.open(filename, "w");
+  //   configFile.close();
+  // }
 
-  //create a buffer for the file data
+  // create a buffer for the file data
   std::unique_ptr<char[]> buf(new char[JSON_SIZE]);
   loadFile(filename, buf);
   StaticJsonBuffer<JSON_SIZE> jsonBuffer;
   JsonObject& json = jsonBuffer.parseObject(buf.get());
-  if(json.success()){
-    //add the key to the json object
+  if (json.success()) {
+    // add the key to the json object
     json[keyName] = value;
-    FSdebugPrint("Added Key ");
-    FSdebugPrint(keyName);
-    FSdebugPrint(" With Value ");
-    FSdebugPrintln(value);
+    // FSdebugPrint("Added Key ");  // FS Debug print
+    // FSdebugPrint(keyName);  // FS Debug print
+    // FSdebugPrint(" with Value ");  // FS Debug print
+    // FSdebugPrintln(value);  // FS Debug print
 
-    //save the new config with added key
-    saveConfig(json, filename);
-    return true;
+    // save the new config with added key
+    return saveConfig(json, filename);
   }
 
 
@@ -292,65 +293,54 @@ bool ESPHelperFS::addKey(const char* keyName, const char* value, const char* fil
   if(blankJson.success()){
     //add the key to the json object
     blankJson[keyName] = value;
-    FSdebugPrint("Added Key ");
-    FSdebugPrint(keyName);
-    FSdebugPrint(" With Value ");
-    FSdebugPrintln(value);
+    // FSdebugPrint("Added Key ");  // FS Debug print
+    // FSdebugPrint(keyName);  // FS Debug print
+    // FSdebugPrint(" With Value ");  // FS Debug print
+    // FSdebugPrintln(value);  // FS Debug print
 
-    //save the new config with added key
-    saveConfig(blankJson, filename);
-    return true;
+    // save the new config with added key
+    // and return the result of saving
+    return saveConfig(blankJson, filename);
   }
     
   return false;
 }
 
-//read a key from a json file
-String ESPHelperFS::loadKey(const char* keyName){
-  if(_filename != ""){
-    return loadKey(keyName, _filename);
-  }
-  else {return String();}
+
+// read a key from a json file
+String ESPHelperFS::loadKey(const char* keyName) {
+  if(_filename == "")
+    return String();
+  return loadKey(keyName, _filename);
 }
 
-//read a key from a json file
-String ESPHelperFS::loadKey(const char* keyName, const char* filename){
-  static String returnString = "";
-
-  //create a buffer for the file data
+// read a key from a json file
+String ESPHelperFS::loadKey(const char* keyName, const char* filename) {
+  // create a buffer for the file data
   std::unique_ptr<char[]> buf(new char[JSON_SIZE]);
   loadFile(filename, buf);
   StaticJsonBuffer<JSON_SIZE> jsonBuffer;
   JsonObject& json = jsonBuffer.parseObject(buf.get());
-  if(json.success()){
-
-    //if the key does not exist then return an empty string
+  if (json.success()){
+    // if the key does not exist then return an empty string
     if(!json.containsKey(keyName)){
-      FSdebugPrintln("Key not found");
-      
-      return returnString;
+      // FSdebugPrintln("Key not found");  // FS Debug print
+      return "";
     }
-
-    //set the return value to that of the key
-    returnString = (const char*)json[keyName];
+    // return value of the key
+    return (const char*)json[keyName];
   }
-
-  
-  //return the key (blank if file could not be opened)
-  return returnString;
+  // return blank if file could not be opened
+  return "";
 }
 
 
-
-
-
-
-
-netInfo ESPHelperFS::getNetInfo(){
+netInfo ESPHelperFS::getNetInfo() {
   return _networkData;
 }
 
-bool ESPHelperFS::createConfig(const char* filename){
+
+bool ESPHelperFS::createConfig(const char* filename) {
   return createConfig(_filename,
                       defaultConfig.ssid, 
                       defaultConfig.pass, 
@@ -367,7 +357,7 @@ bool ESPHelperFS::createConfig(const char* filename){
 }
 
 
-bool ESPHelperFS::createConfig(const netInfo* config){
+bool ESPHelperFS::createConfig(const netInfo* config) {
   return createConfig(_filename,
                       config->ssid, 
                       config->pass, 
@@ -383,7 +373,7 @@ bool ESPHelperFS::createConfig(const netInfo* config){
                       config->willRetain);
 }
 
-bool ESPHelperFS::createConfig(const netInfo* config, const char* filename){
+bool ESPHelperFS::createConfig(const netInfo* config, const char* filename) {
   return createConfig(filename,
                       config->ssid, 
                       config->pass, 
@@ -399,45 +389,45 @@ bool ESPHelperFS::createConfig(const netInfo* config, const char* filename){
                       config->willRetain);
 }
 
-bool ESPHelperFS::createConfig( const char* filename,
-                                const char* _ssid, 
-                                const char* _networkPass, 
-                                const char* _deviceName, 
-                                const char* _mqttIP,
-                                const char* _mqttUser,
-                                const char* _mqttPass,
-                                const int _mqttPort,
-                                const char* _otaPass,
-				const char* _willTopic,
-				const char* _willMessage,
-				const int _willQoS,
-				const int _willRetain) {
+bool ESPHelperFS::createConfig(const char* filename,
+                               const char* _ssid, 
+                               const char* _networkPass, 
+                               const char* _deviceName, 
+                               const char* _mqttIP,
+                               const char* _mqttUser,
+                               const char* _mqttPass,
+                               const int _mqttPort,
+                               const char* _otaPass,
+                               const char* _willTopic,
+                               const char* _willMessage,
+                               const int _willQoS,
+                               const int _willRetain) {
 
-  FSdebugPrintln("Generating new config file with values: ");
-  FSdebugPrint("SSID: ");
-  FSdebugPrintln(_ssid);
-  FSdebugPrint("Network Pass: ");
-  FSdebugPrintln(_networkPass);
-  FSdebugPrint("hostname: ");
-  FSdebugPrintln(_deviceName);
-  FSdebugPrint("MQTT Server: ");
-  FSdebugPrintln(_mqttIP);
-  FSdebugPrint("MQTT Username: ");
-  FSdebugPrintln(_mqttUser);
-  FSdebugPrint("MQTT Password: ");
-  FSdebugPrintln(_mqttPass);
-  FSdebugPrint("MQTT PORT: ");
-  FSdebugPrintln(_mqttPort);
-  FSdebugPrint("OTA Password: ");
-  FSdebugPrintln(_otaPass);
-  FSdebugPrint("Last Will Topic: ");
-  FSdebugPrintln(_willTopic);
-  FSdebugPrint("Last Will Message: ");
-  FSdebugPrintln(_willMessage);
-  FSdebugPrint("Last Will QoS: ");
-  FSdebugPrintln(_willQoS);
-  FSdebugPrint("Last Will Retain: ");
-  FSdebugPrintln(_willRetain);
+  // FSdebugPrintln("Generating new config file with values: ");  // FS Debug print
+  // FSdebugPrint("SSID: ");  // FS Debug print
+  // FSdebugPrintln(_ssid);  // FS Debug print
+  // FSdebugPrint("Network Pass: ");  // FS Debug print
+  // FSdebugPrintln(_networkPass);  // FS Debug print
+  // FSdebugPrint("hostname: ");  // FS Debug print
+  // FSdebugPrintln(_deviceName);  // FS Debug print
+  // FSdebugPrint("MQTT Server: ");  // FS Debug print
+  // FSdebugPrintln(_mqttIP);  // FS Debug print
+  // FSdebugPrint("MQTT Username: ");  // FS Debug print
+  // FSdebugPrintln(_mqttUser);  // FS Debug print
+  // FSdebugPrint("MQTT Password: ");  // FS Debug print
+  // FSdebugPrintln(_mqttPass);  // FS Debug print
+  // FSdebugPrint("MQTT PORT: ");  // FS Debug print
+  // FSdebugPrintln(_mqttPort);  // FS Debug print
+  // FSdebugPrint("OTA Password: ");  // FS Debug print
+  // FSdebugPrintln(_otaPass);  // FS Debug print
+  // FSdebugPrint("Last Will Topic: ");  // FS Debug print
+  // FSdebugPrintln(_willTopic);  // FS Debug print
+  // FSdebugPrint("Last Will Message: ");  // FS Debug print
+  // FSdebugPrintln(_willMessage);  // FS Debug print
+  // FSdebugPrint("Last Will QoS: ");  // FS Debug print
+  // FSdebugPrintln(_willQoS);  // FS Debug print
+  // FSdebugPrint("Last Will Retain: ");  // FS Debug print
+  // FSdebugPrintln(_willRetain);  // FS Debug print
 
   char portString[10];
   sprintf(portString, "%d", _mqttPort);
@@ -448,14 +438,14 @@ bool ESPHelperFS::createConfig( const char* filename,
   char retainString[10];
   sprintf(retainString, "%d", _willRetain);
 
-  FSdebugPrintln("creating json");
+  // FSdebugPrintln("creating json");  // FS Debug print
 
-  //create a buffer for the file data
+  // create a buffer for the file data
   std::unique_ptr<char[]> buf(new char[JSON_SIZE]);
   loadFile(filename, buf);
   StaticJsonBuffer<JSON_SIZE> jsonBuffer;
 
-  //if a json file already exists then use that as the base
+  // if a json file already exists then use that as the base
   JsonObject& json = validateConfig(filename) == GOOD_CONFIG ? jsonBuffer.parseObject(buf.get()) : jsonBuffer.createObject();
 
   json["ssid"] = _ssid;
@@ -471,38 +461,32 @@ bool ESPHelperFS::createConfig( const char* filename,
   json["willQoS"] = qoSString;
   json["willRetain"] = retainString;
 
-  FSdebugPrintln("done");
-
+  // FSdebugPrintln("done");  // FS Debug print
   return saveConfig(json, filename);
 }
 
+
 bool ESPHelperFS::saveConfig(JsonObject& json, const char* filename) {
-  FSdebugPrintln("Saving File...");
+  // FSdebugPrintln("Saving File...");  // FS Debug print
+  // if (SPIFFS.exists(filename)) {
+  //   SPIFFS.remove(filename);
+  // }
 
-  if(SPIFFS.exists(filename)){
-    SPIFFS.remove(filename);
-  }
-
-  FSdebugPrintln("Opening File as write only");
-
-
+  // FSdebugPrintln("Opening File as write only");  // FS Debug print
+  // The "w" argument makes the existing file to be ignored (if there is one)
+  // so the new config is written over the old (not matter if it ever existed)
   File configFile = SPIFFS.open(filename, "w");
   if (!configFile) {
-    FSdebugPrintln("Failed to open config file for writing");
+    // FSdebugPrintln("Failed to open config file for writing");  // FS Debug print
     return false;
   }
 
-  FSdebugPrintln("File open now writing");
-  
+  // FSdebugPrintln("File open now writing");  // FS Debug print
   json.printTo(configFile);
 
-  FSdebugPrintln("Writing done now closing");
-
+  // FSdebugPrintln("Writing done now closing");  // FS Debug print
   configFile.close();
 
-  FSdebugPrintln("done.");
+  // FSdebugPrintln("done.");  // FS Debug print
   return true;
 }
-
-
-

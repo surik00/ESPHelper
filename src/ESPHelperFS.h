@@ -17,8 +17,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
+
+Refactoring by Suren Khorenyan
 */
-    
 
 
 #ifndef ESPHelperFS_H
@@ -26,17 +27,19 @@ along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ESPHelper.h"
 #include <ArduinoJson.h>
-#include "FS.h"
+#include <FS.h>
 
+// if uncommenting the line below, don't forget to uncomment
+// all "FS Debug print" lines in the ESPHelperFS.cpp file
 // #define DEBUG
 
 #ifdef DEBUG
-  #define FSdebugPrint(x) Serial.print(x) //debug on
-  #define FSdebugPrintln(x) Serial.println(x) //debug on
+  #define FSdebugPrint(x) Serial.print(x)      // debug on
+  #define FSdebugPrintln(x) Serial.println(x)  // debug on
   #define DEBUG_PRINT_SPEED 250
 #else
-  #define FSdebugPrint(x) {;} //debug off
-  #define FSdebugPrintln(x) {;} //debug off
+  #define FSdebugPrint(x) {;}    // debug off
+  #define FSdebugPrintln(x) {;}  // debug off
   #define DEBUG_PRINT_SPEED 1
 #endif
 
@@ -44,91 +47,91 @@ const uint16_t JSON_SIZE = 512;
 
 enum validateStates {NO_CONFIG, CONFIG_TOO_BIG, CANNOT_PARSE, INCOMPLETE, GOOD_CONFIG};
 
-class ESPHelperFS{
 
-public:
-  ESPHelperFS();
-  ESPHelperFS(const char* filename);
+class ESPHelperFS {
 
-  static bool begin();
-  static void end();
+  public:
 
-  void printFile();
+    ESPHelperFS();
+    ESPHelperFS(const char* filename);
 
-  
+    static bool begin();
+    static void end();
 
-  static int8_t validateConfig(const char* filename);
+    void printFile();
 
-  bool createConfig(const char* filename);
-  bool createConfig(const netInfo* config);
-  static bool createConfig(const netInfo* config, const char* filename);
+    static int8_t validateConfig(const char* filename);
 
-  bool loadNetworkConfig();
+    bool createConfig(const char* filename);
+    bool createConfig(const netInfo* config);
+    static bool createConfig(const netInfo* config, const char* filename);
 
-  bool addKey(const char* keyName, const char* value);
-  static bool addKey(const char* keyName, const char* value, const char* filename);
+    bool loadNetworkConfig();
 
-  String loadKey(const char* keyName);
-  static String loadKey(const char* keyName, const char* filename);
+    bool addKey(const char* keyName, const char* value);
+    static bool addKey(const char* keyName, const char* value, const char* filename);
 
-  netInfo getNetInfo();
+    String loadKey(const char* keyName);
+    static String loadKey(const char* keyName, const char* filename);
 
-  static bool createConfig(  const char* filename,
-                      const char* _ssid, 
-                      const char* _networkPass, 
-                      const char* _deviceName, 
-                      const char* _mqttIP,
-                      const char* _mqttUser,
-                      const char* _mqttPass,
-                      const int _mqttPort,
-                      const char* _otaPass,
-		      const char* _willTopic,
-		      const char* _willMessage,
-		      const int _willQoS,
-		      const int _willRetain);
+    netInfo getNetInfo();
 
-  void printFSinfo();
+    static bool createConfig(  const char* filename,
+                        const char* _ssid, 
+                        const char* _networkPass, 
+                        const char* _deviceName, 
+                        const char* _mqttIP,
+                        const char* _mqttUser,
+                        const char* _mqttPass,
+                        const int _mqttPort,
+                        const char* _otaPass,
+            const char* _willTopic,
+            const char* _willMessage,
+            const int _willQoS,
+            const int _willRetain);
 
-  
-  static StaticJsonBuffer<JSON_SIZE> *_tmpBufPtr;
-private:
-  static bool loadFile(const char* filename, std::unique_ptr<char[]> &buf);
+    void printFSinfo();
 
+    static StaticJsonBuffer<JSON_SIZE> *_tmpBufPtr;
+    
 
+  private:
 
-  char ssid[64];
-  char netPass[32];
-  char hostName[32];
-  char mqtt_ip[64];
-  char mqttUser[32];
-  char mqttPass[32];
-  char mqttPort[16];
-  char otaPass[32];
-  char willTopic[64];
-  char willMessage[64];
-  char willQoS[4];
-  char willRetain[4];
+    static bool loadFile(const char* filename, std::unique_ptr<char[]> &buf);
 
-  netInfo _networkData;
+    char ssid[64];
+    char netPass[32];
+    char hostName[32];
+    char mqtt_ip[64];
+    char mqttUser[32];
+    char mqttPass[32];
+    char mqttPort[16];
+    char otaPass[32];
+    char willTopic[64];
+    char willMessage[64];
+    char willQoS[4];
+    char willRetain[4];
 
-  const char* _filename;
+    netInfo _networkData;
 
-  static bool saveConfig(JsonObject& json, const char* filename);
+    const char* _filename;
 
-  const netInfo defaultConfig = { mqttHost : "0.0.0.0",     //can be blank if not using MQTT
-                                mqttUser : "user",   //can be blank
-                                mqttPass : "pass",   //can be blank
-                                mqttPort : 1883,         //default port for MQTT is 1883 - only change if needed.
-                                ssid : "networkSSID", 
-                                pass : "networkPass",
-                                otaPassword : "otaPass",
-                                hostname : "NEW-ESP8266",
-				willTopic : "defaultWillTopic",
-				willMessage : "",
-				willQoS : 1,
-				willRetain : 1}; 
+    static bool saveConfig(JsonObject& json, const char* filename);
+
+    const netInfo defaultConfig = {
+      mqttHost : "0.0.0.0",  // can be blank if not using MQTT
+      mqttUser : "user",     // can be blank
+      mqttPass : "pass",     // can be blank
+      mqttPort : 1883,       // default port for MQTT is 1883 - change only if needed.
+      ssid : "networkSSID", 
+      pass : "networkPass",
+      otaPassword : "ota-password",
+      hostname : "NEW-ESP8266",
+      willTopic : "defaultWillTopic",
+      willMessage : "",
+      willQoS : 1,
+      willRetain : 1
+    }; 
 };
 
 #endif
-
-
