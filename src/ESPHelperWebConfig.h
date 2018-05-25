@@ -50,8 +50,10 @@ class ESPHelperWebConfig {
 
 
   private:
-    void handleGet();
-    void handlePost();
+
+    String configPageHTML();
+    void handleGetConfig();
+    void handlePostConfig();
     void handleNotFound();
     void handleReset();
 

@@ -23,6 +23,7 @@ Refactoring and improvements by Suren Khorenyan
 
 
 #include "ESPHelperWebConfig.h"
+#include "WebConfigHTML.h"
 #include <FS.h>
 
 
@@ -50,8 +51,8 @@ bool ESPHelperWebConfig::begin() {
   // setup server handlers
   // these handler function definitions use lambdas to pass the funtion... more information can be found here:
   // https://stackoverflow.com/questions/39803135/c-unresolved-overloaded-function-type
-  _server->on(_pageURI, HTTP_GET, [this](){handleGet();});    // Call the 'handleGet' function when a client requests the specified URI with GET
-  _server->on(_pageURI, HTTP_POST, [this](){handlePost();});  // Call the 'handlePost' function when a POST request is made to the specified URI
+  _server->on(_pageURI, HTTP_GET, [this](){handleGetConfig();});    // Call the 'handleGetConfig' function when a client requests the specified URI with GET
+  _server->on(_pageURI, HTTP_POST, [this](){handlePostConfig();});  // Call the 'handlePostConfig' function when a POST request is made to the specified URI
   _server->onNotFound([this](){handleNotFound();});           // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
 
   if (_runningLocal)
@@ -79,49 +80,42 @@ netInfo ESPHelperWebConfig::getConfig() {
 }
 
 
-// main config page that allows user to enter in configuration info
-void ESPHelperWebConfig::handleGet() {
-  String showReset = "";
-
-  if (_resetSet) {
-    showReset = "</br></br></br></br></br><form action=\"" + String(_resetURI) + "\" method=\"POST\">\
-    <input type=\"submit\" value=\"Click Here to Reset ESP Filesystem\"> (WARNING: Deletes all files on device!)</form>";
-  }
+String ESPHelperWebConfig::configPageHTML() {
+  // prefillable data
+  String hostname = String();
+  String ssid = String();
+  String mqttHost = String();
+  String mqttPort = String();
+  String mqttUser = String();
 
   if (_preFill) {
-    _server->send(200, "text/html", 
-      String("<form action=\"" + String(_pageURI) + "\" method=\"POST\">\
-      <input type=\"text\" name=\"hostname\" size=\"64\" maxlength=\"63\" placeholder=\"Device Hostname (Required)\" required=\"\" value=\"" + String(_fillData->hostname) + "\"></br>\
-      <input type=\"text\" name=\"ssid\" size=\"64\" maxlength=\"63\" placeholder=\"SSID (Required)\" required=\"\" value=\"" + String(_fillData->ssid) + "\"></br>\
-      <input type=\"password\" name=\"netPass\" size=\"64\" maxlength=\"63\" placeholder=\"Network Password (Previous value used if blank)\"></br>\
-      <input type=\"password\" name=\"otaPassword\" size=\"64\" maxlength=\"63\" placeholder=\"OTA Password (Previous value used if blank)\"></br>\
-      <input type=\"text\" name=\"mqttHost\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Host\" value=\"" + String(_fillData->mqttHost) + "\"></br>\
-      <input type=\"text\" name=\"mqttPort\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Port (default is 1883)\" value=\"" + String(_fillData->mqttPort) + "\"></br>\
-      <input type=\"text\" name=\"mqttUser\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Username\" value=\"" + String(_fillData->mqttUser) + "\"></br>\
-      <input type=\"password\" name=\"mqttPass\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Password (Previous value used if blank)\"></br>\
-      <input type=\"submit\" value=\"Submit\"></form>\
-      <p>Press Submit to update ESP8266 config file</p>" + showReset)
-    );
-  } else {
-    _server->send(200, "text/html", 
-      String("<form action=\"" + String(_pageURI) + "\" method=\"POST\">\
-      <input type=\"text\" name=\"hostname\" size=\"64\" maxlength=\"63\" placeholder=\"Device Hostname (Required)\" required=\"\"></br>\
-      <input type=\"text\" name=\"ssid\" size=\"64\" maxlength=\"63\" placeholder=\"SSID (Required)\" required=\"\"></br>\
-      <input type=\"password\" name=\"netPass\" size=\"64\" maxlength=\"63\" placeholder=\"Network Password\"></br>\
-      <input type=\"password\" name=\"otaPassword\" size=\"64\" maxlength=\"63\" placeholder=\"OTA Password\"></br>\
-      <input type=\"text\" name=\"mqttHost\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Host\"></br>\
-      <input type=\"text\" name=\"mqttPort\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Port (default is 1883)\"></br>\
-      <input type=\"text\" name=\"mqttUser\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Username\"></br>\
-      <input type=\"password\" name=\"mqttPass\" size=\"64\" maxlength=\"63\" placeholder=\"MQTT Password\"></br>\
-      <input type=\"submit\" value=\"Submit\"></form>\
-      <p>Press Submit to update ESP8266 config file</p>" + showReset)
-    );
+    hostname = String(_fillData->hostname);
+    ssid = String(_fillData->ssid);
+    mqttHost = String(_fillData->mqttHost);
+    mqttPort = String(_fillData->mqttPort);
+    mqttUser = String(_fillData->mqttUser);
   }
+
+  return String(
+     String(HTML_START) +
+     String(HTML_STYLE) + String(HTML_S_T) +
+     String("Configure ESP8266") + String(HTML_T_B) +
+     String(HTML_CFG_HEADING) + String(HTML_CFG_AL) + String(_pageURI) +
+     String(HTML_CFG_1) + hostname + String(HTML_CFG_2) + ssid +
+     String(HTML_CFG_3) + mqttHost + String(HTML_CFG_4) + mqttPort +
+     String(HTML_CFG_5) + mqttUser + String(HTML_CFG_6) +
+     (_resetSet ? (String(HTML_CFG_RESET_START) + String(_resetURI) + String(HTML_CFG_RESET_END)) : "") +
+     String(HTML_CLOSE)
+  );
 }
 
+// main config page that allows user to enter in configuration info
+void ESPHelperWebConfig::handleGetConfig() {
+  _server->send(200, "text/html", configPageHTML());
+}
 
 // If a POST request is made to the _pageURI
-void ESPHelperWebConfig::handlePost() {   
+void ESPHelperWebConfig::handlePostConfig() {   
   // make sure that all the arguments exist and that at least SSID and hostname have been entered                      
   if ( !(_server->hasArg("ssid")
       && _server->arg("ssid") != NULL
@@ -136,14 +130,14 @@ void ESPHelperWebConfig::handlePost() {
 
     // If the POST request doesn't have username and password data
     // then the request is invalid, so send HTTP status 400
-    _server->send(400, "text/plain", "400: Invalid Request - Did you make sure to specify an SSID and Hostname?");
+    _server->send(400, "text/html", HTML_400_PARAMS_MISSING);
     return;
   }
 
   // if there is an mqtt user/pass/port entered then there better also be a host!
   if ((_server->arg("mqttUser") != NULL || _server->arg("mqttPass") != NULL) && _server->arg("mqttHost") == NULL) {
      // The request is invalid, so send HTTP status 400
-    _server->send(400, "text/plain", "400: Invalid Request - MQTT info specified without host"); 
+    _server->send(400, "text/html", HTML_400_MQTT_NO_HOST); 
     return;
   }
 
@@ -187,7 +181,7 @@ void ESPHelperWebConfig::handlePost() {
   }
 
   // tell user that the config is successfully loaded and the module is restarting
-  _server->send(200, "text/html", "<h1>Config info successfully loaded, restarting!</h1>");
+  _server->send(200, "text/html", HTML_CONFIG_SUCCESS);
 
   // enter in the new data 
   _config = {
@@ -213,8 +207,7 @@ void ESPHelperWebConfig::setSpiffsReset(const char* URI){
 
 
 void ESPHelperWebConfig::handleReset(){
-  // tell the user that the config is loaded in and the module is restarting
-  _server->send(200, "text/html", "<h1>Resetting SPIFFS and restarting with default values</h1>");
+  _server->send(200, "text/html", HTML_SPIFFS_FORMAT);
 
   SPIFFS.format();
   ESP.restart();
