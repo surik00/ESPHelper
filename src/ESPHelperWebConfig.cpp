@@ -79,9 +79,12 @@ netInfo ESPHelperWebConfig::getConfig() {
 	return _config;
 }
 
+// main config page that allows user to enter configuration info
+void ESPHelperWebConfig::handleGetConfig() {
+  // sometimes works incorrect, removed
+  // _server->send(200, "text/html", configPageHTML());
 
-String ESPHelperWebConfig::configPageHTML() {
-  // prefillable data
+  // prepare prefillable data
   String hostname = String();
   String ssid = String();
   String mqttHost = String();
@@ -96,22 +99,41 @@ String ESPHelperWebConfig::configPageHTML() {
     mqttUser = String(_fillData->mqttUser);
   }
 
-  return String(
-     String(HTML_START) +
-     String(HTML_STYLE) + String(HTML_S_T) +
-     String("Configure ESP8266") + String(HTML_T_B) +
-     String(HTML_CFG_HEADING) + String(HTML_CFG_AL) + String(_pageURI) +
-     String(HTML_CFG_1) + hostname + String(HTML_CFG_2) + ssid +
-     String(HTML_CFG_3) + mqttHost + String(HTML_CFG_4) + mqttPort +
-     String(HTML_CFG_5) + mqttUser + String(HTML_CFG_6) +
-     (_resetSet ? (String(HTML_CFG_RESET_START) + String(_resetURI) + String(HTML_CFG_RESET_END)) : "") +
-     String(HTML_CLOSE)
-  );
-}
-
-// main config page that allows user to enter in configuration info
-void ESPHelperWebConfig::handleGetConfig() {
-  _server->send(200, "text/html", configPageHTML());
+  /* Like in example https://github.com/esp8266/Arduino/blob/61cd8d83859524db0066a647de3de3f6a0039bb2/libraries/DNSServer/examples/CaptivePortalAdvanced/handleHttp.ino#L40-L92*/
+  _server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  _server->sendHeader("Pragma", "no-cache");
+  _server->sendHeader("Expires", "-1");
+  _server->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  // Empty content inhibits Content-length header so we have to close the socket ourselves.
+  _server->send(200, "text/html", "");
+  // sending all content as separate values to escape Strings concatenation
+  _server->sendContent(HTML_START);
+  _server->sendContent(HTML_STYLE);
+  _server->sendContent(HTML_S_T);
+  _server->sendContent("Configure ESP8266");
+  _server->sendContent(HTML_T_B);
+  _server->sendContent(HTML_CFG_HEADING);
+  _server->sendContent(HTML_CFG_AL);
+  _server->sendContent(_pageURI);
+  _server->sendContent(HTML_CFG_1);
+  _server->sendContent(hostname);
+  _server->sendContent(HTML_CFG_2);
+  _server->sendContent(ssid);
+  _server->sendContent(HTML_CFG_3);
+  _server->sendContent(mqttHost);
+  _server->sendContent(HTML_CFG_4);
+  _server->sendContent(mqttPort);
+  _server->sendContent(HTML_CFG_5);
+  _server->sendContent(mqttUser);
+  _server->sendContent(HTML_CFG_6);
+  if (_resetSet) {
+    _server->sendContent(HTML_CFG_RESET_START);
+    _server->sendContent(_resetURI);
+    _server->sendContent(HTML_CFG_RESET_END);
+  }
+  _server->sendContent(HTML_CLOSE);
+  _server->client().stop();
+  /**/
 }
 
 // If a POST request is made to the _pageURI
