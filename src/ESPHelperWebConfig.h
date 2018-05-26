@@ -34,11 +34,26 @@ Refactoring by Suren Khorenyan
 class ESPHelperWebConfig {
 
   public:
-    ESPHelperWebConfig(int port, const char* URI);
-    ESPHelperWebConfig(ESP8266WebServer *server, const char* URI);
+    ESPHelperWebConfig();
+    ESPHelperWebConfig(int port);
+    ESPHelperWebConfig(ESP8266WebServer *server);
+    ESPHelperWebConfig(const char* indexPageURI, const char* configPageURI);
+    ESPHelperWebConfig(int port, const char* indexPageURI, const char* configPageURI);
+    ESPHelperWebConfig(ESP8266WebServer *server,
+                       const char* indexPageURI,
+                       const char* configPageURI);
 
-    bool begin(const char* hostname);
+    // ESPHelperWebConfig(int port, const char* URI);
+    // ESPHelperWebConfig(ESP8266WebServer *server, const char* URI);
+
     bool begin();
+    bool begin(const char* hostname);
+
+    // bool startServer();
+    // bool startServer(ESP8266WebServer *server);
+
+    // bool startServer(const char* indexPageURI, const char* configPageURI);
+    // bool startServer(ESP8266WebServer *server, const char* indexPageURI, const char* configPageURI);
 
     void fillConfig(netInfo* fillInfo);
 
@@ -50,13 +65,16 @@ class ESPHelperWebConfig {
 
 
   private:
+    void handleGetInfo();
     void handleGetConfig();
     void handlePostConfig();
     void handleNotFound();
     void handleReset();
+    void startLargeResponse();
 
     ESP8266WebServer *_server;
     ESP8266WebServer _localServer;
+
 
     char _newSsid[64];
     char _newNetPass[64];
@@ -67,8 +85,9 @@ class ESPHelperWebConfig {
     char _newMqttPass[64];
     int _newMqttPort;
 
+    const char* _infoPageURI;
+    const char* _configPageURI;
     const char* _resetURI;
-    const char* _pageURI;
 
     netInfo* _fillData;
     bool _preFill = false;

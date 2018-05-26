@@ -26,19 +26,70 @@ Refactoring and improvements by Suren Khorenyan
 #include "WebConfigHTML.h"
 #include <FS.h>
 
+#define CFG_NOT_SET "[fillConfig not set]"
 
+
+ESPHelperWebConfig::ESPHelperWebConfig() : _localServer(80) {
+  _server = &_localServer;
+  _runningLocal = true;
+  _infoPageURI = "/";
+  _configPageURI = "/config";
+}
+
+ESPHelperWebConfig::ESPHelperWebConfig(int port) : _localServer(port) {
+  _server = &_localServer;
+  _runningLocal = true;
+  _infoPageURI = "/";
+  _configPageURI = "/config";
+}
+
+ESPHelperWebConfig::ESPHelperWebConfig(ESP8266WebServer *server) {
+  _server = server;
+  _runningLocal = false;
+  _infoPageURI = "/";
+  _configPageURI = "/config";
+}
+
+ESPHelperWebConfig::ESPHelperWebConfig(const char* indexPageURI,
+                                       const char* configPageURI) : _localServer(80) {
+  _server = &_localServer;
+  _runningLocal = true;
+  _infoPageURI = indexPageURI;
+  _configPageURI = configPageURI;
+}
+
+ESPHelperWebConfig::ESPHelperWebConfig(int port, const char* indexPageURI,
+                                       const char* configPageURI) : _localServer(port) {
+  _server = &_localServer;
+  _runningLocal = true;
+  _infoPageURI = indexPageURI;
+  _configPageURI = configPageURI;
+}
+
+ESPHelperWebConfig::ESPHelperWebConfig(ESP8266WebServer *server,
+                                       const char* indexPageURI,
+                                       const char* configPageURI) {
+  _server = server;
+  _runningLocal = false;
+  _infoPageURI = indexPageURI;
+  _configPageURI = configPageURI;
+}
+
+
+/* uncompatable
 ESPHelperWebConfig::ESPHelperWebConfig(int port, const char* URI) : _localServer(port) {
   _server = &_localServer;
   _runningLocal = true;
-  _pageURI = URI;
+  _configPageURI = URI;
 }
 
 
 ESPHelperWebConfig::ESPHelperWebConfig(ESP8266WebServer *server, const char* URI) {
   _server = server;
   _runningLocal = false;
-  _pageURI = URI;
+  _configPageURI = URI;
 }
+*/
 
 
 bool ESPHelperWebConfig::begin(const char* _hostname) {
@@ -46,19 +97,19 @@ bool ESPHelperWebConfig::begin(const char* _hostname) {
   return begin();
 }
 
-
 bool ESPHelperWebConfig::begin() {
-  // setup server handlers
-  // these handler function definitions use lambdas to pass the funtion... more information can be found here:
-  // https://stackoverflow.com/questions/39803135/c-unresolved-overloaded-function-type
-  _server->on(_pageURI, HTTP_GET, [this](){handleGetConfig();});    // Call the 'handleGetConfig' function when a client requests the specified URI with GET
-  _server->on(_pageURI, HTTP_POST, [this](){handlePostConfig();});  // Call the 'handlePostConfig' function when a POST request is made to the specified URI
-  _server->onNotFound([this](){handleNotFound();});           // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
+  // add info page handler
+  _server->on(_infoPageURI, HTTP_GET, [this](){handleGetInfo();});
+  // add config page handlers
+  _server->on(_configPageURI, HTTP_GET, [this](){handleGetConfig();});
+  _server->on(_configPageURI, HTTP_POST, [this](){handlePostConfig();});
+  // handle all not found requests (404)
+  _server->onNotFound([this](){handleNotFound();});
 
   if (_runningLocal)
-    _server->begin(); // Actually start the server
+    _server->begin();  // Actually start the server
 
-	return true;
+  return true;
 }
 
 
@@ -69,21 +120,60 @@ void ESPHelperWebConfig::fillConfig(netInfo* fillInfo) {
 
 
 bool ESPHelperWebConfig::handle() {
-	_server->handleClient();
-	return _configLoaded;
+  _server->handleClient();
+  return _configLoaded;
 }
 
 
 netInfo ESPHelperWebConfig::getConfig() {
-	_configLoaded = false;
-	return _config;
+  _configLoaded = false;
+  return _config;
+}
+
+void ESPHelperWebConfig::startLargeResponse() {
+  /*
+    Like in example
+    https://github.com/esp8266/Arduino/blob/61cd8d83859524db0066a647de3de3f6a0039bb2/libraries/DNSServer/examples/CaptivePortalAdvanced/handleHttp.ino#L40-L92
+  */
+  _server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  _server->sendHeader("Pragma", "no-cache");
+  _server->sendHeader("Expires", "-1");
+  /*
+    Set content length CONTENT_LENGTH_UNKNOWN to send data by chunks
+    https://github.com/esp8266/Arduino/blob/5328a8b91ef04aa10cb9cb272ba1ade5299cb810/libraries/ESP8266WebServer/src/ESP8266WebServer.cpp#L381
+   */
+  _server->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  // Empty content inhibits Content-length header so we have to close the socket ourselves.
+  _server->send(200, "text/html", "");
+}
+
+void ESPHelperWebConfig::handleGetInfo() {
+  startLargeResponse();
+  _server->sendContent(HTML_START);
+  _server->sendContent(HTML_STYLE);
+  _server->sendContent(HTML_S_T);
+  _server->sendContent("ESP8266 Info");
+  _server->sendContent(HTML_T_B);
+  _server->sendContent(HTML_INFO_HEADING);
+  _server->sendContent(HTML_INFO_1);
+  _server->sendContent(String((_preFill ? _fillData->hostname : CFG_NOT_SET)));
+  _server->sendContent(HTML_INFO_2);
+  _server->sendContent(String((_preFill ? _fillData->ssid : CFG_NOT_SET)));
+  _server->sendContent(HTML_INFO_3);
+  _server->sendContent(String((_preFill ? _fillData->mqttHost : CFG_NOT_SET)));
+  _server->sendContent(HTML_INFO_4);
+  _server->sendContent(String(millis()));
+  _server->sendContent(HTML_INFO_5);
+  _server->sendContent(String(_configPageURI));
+  _server->sendContent(HTML_INFO_6);
+  _server->sendContent(HTML_CLOSE);
+
+  // Stop is needed because we sent no content length!
+  _server->client().stop();
 }
 
 // main config page that allows user to enter configuration info
 void ESPHelperWebConfig::handleGetConfig() {
-  // sometimes works incorrect, removed
-  // _server->send(200, "text/html", configPageHTML());
-
   // prepare prefillable data
   String hostname = String();
   String ssid = String();
@@ -99,13 +189,7 @@ void ESPHelperWebConfig::handleGetConfig() {
     mqttUser = String(_fillData->mqttUser);
   }
 
-  /* Like in example https://github.com/esp8266/Arduino/blob/61cd8d83859524db0066a647de3de3f6a0039bb2/libraries/DNSServer/examples/CaptivePortalAdvanced/handleHttp.ino#L40-L92*/
-  _server->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  _server->sendHeader("Pragma", "no-cache");
-  _server->sendHeader("Expires", "-1");
-  _server->setContentLength(CONTENT_LENGTH_UNKNOWN);
-  // Empty content inhibits Content-length header so we have to close the socket ourselves.
-  _server->send(200, "text/html", "");
+  startLargeResponse();
   // sending all content as separate values to escape Strings concatenation
   _server->sendContent(HTML_START);
   _server->sendContent(HTML_STYLE);
@@ -114,7 +198,7 @@ void ESPHelperWebConfig::handleGetConfig() {
   _server->sendContent(HTML_T_B);
   _server->sendContent(HTML_CFG_HEADING);
   _server->sendContent(HTML_CFG_AL);
-  _server->sendContent(_pageURI);
+  _server->sendContent(_configPageURI);
   _server->sendContent(HTML_CFG_1);
   _server->sendContent(hostname);
   _server->sendContent(HTML_CFG_2);
@@ -132,11 +216,12 @@ void ESPHelperWebConfig::handleGetConfig() {
     _server->sendContent(HTML_CFG_RESET_END);
   }
   _server->sendContent(HTML_CLOSE);
+
+  // Stop is needed because we sent no content length!
   _server->client().stop();
-  /**/
 }
 
-// If a POST request is made to the _pageURI
+// If a POST request is made to the _configPageURI
 void ESPHelperWebConfig::handlePostConfig() {   
   // make sure that all the arguments exist and that at least SSID and hostname have been entered                      
   if ( !(_server->hasArg("ssid")
@@ -207,9 +292,9 @@ void ESPHelperWebConfig::handlePostConfig() {
 
   // enter in the new data 
   _config = {
-    mqttHost : _newMqttHost,     
-    mqttUser : _newMqttUser,   
-    mqttPass : _newMqttPass,   
+    mqttHost : _newMqttHost,
+    mqttUser : _newMqttUser,
+    mqttPass : _newMqttPass,
     mqttPort : _newMqttPort,
     ssid : _newSsid, 
     pass : _newNetPass,
