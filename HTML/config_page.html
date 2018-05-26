@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style type="text/css">
+    /* The style.css has to be inserted here */
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Configure ESP8266</title>
+</head>
+
+<body>
+    <br>
+    <div class="c">
+        <h2>ESP8266 System Configuration</h2>
+        <br>
+        <div class="al ai">If you leave blank password fields (for OTA, Wi-Fi network and MQTT), previous values will be used.</div>
+        <form action="/config" method="POST">
+            <div class="fg">
+                <label for="dn" class="cs3 cfl">Device Name</label>
+                <div class="cs9">
+                    <input type="text" name="hostname" required="" placeholder="My-ESP8266 (Required)" id="dn" class="fc" maxlength="63" value="ESP_12_NEW_WEB">
+                </div>
+            </div>
+            <div class="fg">
+                <label for="op" class="cs3 cfl">OTA Password</label>
+                <div class="cs9">
+                    <input type="password" name="otaPassword" placeholder="OTA Password" id="op" class="fc" maxlength="63">
+                </div>
+            </div>
+            <hr>
+            <div class="fg">
+                <label for="sn" class="cs3 cfl">SSID</label>
+                <div class="cs9">
+                    <input type="text" name="ssid" required="" placeholder="My home Wi-Fi Network (Required)" id="sn" class="fc" maxlength="63" value="Suren's Wi-Fi Network">
+                </div>
+            </div>
+            <div class="fg">
+                <label for="wp" class="cs3 cfl">Wi-Fi Password</label>
+                <div class="cs9">
+                    <input type="password" name="netPass" placeholder="Wi-Fi Password" id="wp" class="fc" maxlength="63">
+                </div>
+            </div>
+            <hr>
+            <div class="fg">
+                <label for="mh" class="cs3 cfl">MQTT Broker Host</label>
+                <div class="cs9">
+                    <input type="text" name="mqttHost" placeholder="192.168.42.13" id="mh" class="fc" maxlength="63" value="10.0.1.14">
+                </div>
+            </div>
+            <div class="fg">
+                <label for="mp" class="cs3 cfl">MQTT Port</label>
+                <div class="cs9">
+                    <input type="text" name="mqttPort" placeholder="1883 (default)" id="mp" class="fc" maxlength="5" value="1883">
+                </div>
+            </div>
+            <div class="fg">
+                <label for="mu" class="cs3 cfl">MQTT Username</label>
+                <div class="cs9">
+                    <input type="text" name="mqttUser" placeholder="MQTT User" id="mu" class="fc" maxlength="63" value="">
+                </div>
+            </div>
+            <div class="fg">
+                <label for="qp" class="cs3 cfl">MQTT Password</label>
+                <div class="cs9">
+                    <input type="password" name="mqttPass" placeholder="MQTT password" id="qp" class="fc" maxlength="63">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-pr">Apply changes</button>
+        </form>
+        <hr>
+        <br>
+        <div class="al ad"><b>WARNING!</b> This will clear the filesystem! All stored files will be removed (including the network configuration file)!</div>
+        <form action="/reset" method="POST">
+            <button type="submit" class="btn btn-d btn-sm">Format filesystem</button>
+        </form>
+    </div>
+    <br>
+</body>
+
+</html>
