@@ -24,7 +24,7 @@ along with ESPHelper.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SHARED_TYPES_H
 #define SHARED_TYPES_H
 
-#define VERSION "1-6-0"
+#define VERSION "1-6-1"
 
 
 //Maximum number of subscriptions that can be auto-subscribed

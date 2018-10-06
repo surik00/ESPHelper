@@ -61,7 +61,7 @@ by Suren Khorenyan
 #define HTML_INFO_1 "<br><div class=\"fg\"><div class=\"cs3\">Device Name:</div><div class=\"cs9\"><code>"
 
 // Close Device Name, open Wi-Fi name
-#define HTML_INFO_2 "</code></div></div><div class=\"fg\"><div class=\"cs3\">Wi-Fi to connect</div><div class=\"cs9\"><code>"
+#define HTML_INFO_2 "</code></div></div><div class=\"fg\"><div class=\"cs3\">Wi-Fi Connected</div><div class=\"cs9\"><code>"
 
 // Close Wi-Fi name, open MQTT Broker Host
 #define HTML_INFO_3 "</code></div></div><div class=\"fg\"><div class=\"cs3\">MQTT Host</div><div class=\"cs9\"><code>"
@@ -87,8 +87,8 @@ by Suren Khorenyan
 
 #define HTML_400_PARAMS_MISSING "<h1>Invalid Request - Did you make sure to specify an SSID and Hostname?</h1>"
 #define HTML_400_MQTT_NO_HOST "<h1>Invalid Request - MQTT info specified without host</h1>"
-#define HTML_CONFIG_SUCCESS "<h1>Config info successfully loaded, restarting!</h1>"
-#define HTML_SPIFFS_FORMAT "<h1>Formatting SPIFFS and restarting with default values</h1>"
+#define HTML_CONFIG_SUCCESS "<h1>Config info successfully loaded, restarting!</h1><h2>Power reconnect may be needed</h2>"
+#define HTML_SPIFFS_FORMAT "<h1>Formatting SPIFFS and restarting with default values</h1><h2>Power reconnect may be needed</h2>"
 
 
 #endif
