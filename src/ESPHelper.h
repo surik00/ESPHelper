@@ -219,6 +219,7 @@ class ESPHelper {
     char* getHostname();
 
     void safeApDisconnect();
+    uint8_t softAPgetStationNum();
 
 
   private:

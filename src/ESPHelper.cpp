@@ -313,7 +313,7 @@ bool ESPHelper::begin(const char *ssid,
 bool ESPHelper::begin(){
   if (_ssidSet) {
     // Generate client name based on MAC address and last 8 bits of microsecond counter
-    _clientName += "esp8266-";
+    _clientName = "ESP8266-";
     uint8_t mac[6];
     WiFi.macAddress(mac);
     _clientName += macToStr(mac);
@@ -1138,4 +1138,8 @@ void ESPHelper::OTA_setHostnameWithVersion(const char* hostname) {
 
 char* ESPHelper::getHostname() {
   return _hostname;
+}
+
+uint8_t ESPHelper::softAPgetStationNum() {
+  return WiFi.softAPgetStationNum();
 }
